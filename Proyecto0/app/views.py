@@ -1,43 +1,43 @@
 from app import app, bcrypt
+from app.schemas.User import User
+from app.schemas.Sensor import Sensor
+from app.schemas.Allowed import Allowed
 
 from mongoengine import connect, DoesNotExist
 
-from app.schemas.User import User
-
 from flask import jsonify, request, session
-
 from flask_cors import cross_origin
+from datetime import datetime
 
 connect("proyecto0")
 
 
 @app.route('/push-weather', methods=["POST"])
 def push_weather_info():
-    
+
     if request.method == "POST":
 
         req = request.get_json()
-
-        username = req.get("username")
         points = req.get("points")
+        mac_dir = req.get("mac_dir")
 
         try:
-            user = User.objects(username=username).get()
+            allowed = Allowed.objects(mac_dir=mac_dir).get()
         except DoesNotExist:
-            return jsonify(success=False, message="User doesn't exist")
+            return jsonify(succes=False, message="Sensor not allowed")
 
-        for point in points:
-            user.weather_data.append(point)
-        
-        user.save()
+        sensor = Sensor(
+            date=datetime.utcnow(),
+            weather_data=points
+        ).save()
 
         return jsonify(success=True, message="Points added")
 
     return jsonify(success=False, message="Bad request")
 
 
-#get view
-@app.route('/get-weather', methods = ["POST", "GET"])
+# get view
+@app.route('/get-weather', methods=["POST", "GET"])
 @cross_origin(supports_credentials=True)
 def get_weather_info():
 
@@ -51,9 +51,8 @@ def get_weather_info():
             user = User.objects(username=username).get()
         except DoesNotExist:
             return jsonify(success=False, message="User doesn't exist")
-        
+
         return jsonify(success=True, result=user.weather_data)
-    
 
     else:
 
@@ -62,17 +61,13 @@ def get_weather_info():
         if username == None:
             return jsonify(succes=False, message="log in first")
 
-        try:
-            user = User.objects(username=username).get()
-        except DoesNotExist:
-            return jsonify(success=False, message="User doesn't exist")
-        
-        return jsonify(success=True, result=user.weather_data)
-    
+        points = []
+        for obj in Sensor.objects:
+            points.append(obj.weather_data)
 
-    
+        return jsonify(success=True, result=points)
+
     return jsonify(success=False, message="Bad request")
-
 
 
 @app.route("/sign-in", methods=["GET", "POST"])
@@ -90,39 +85,51 @@ def sign_in():
             user = User.objects(username=username).get()
         except DoesNotExist:
             return jsonify(success=False, message="User doesn't exist")
-        
+
         if not bcrypt.check_password_hash(user.password, password):
-            
-            return jsonify(success=False, message="Incorrect password")    
-            
-        
+
+            return jsonify(success=False, message="Incorrect password")
+
         session["USERNAME"] = user["username"]
-        
-        print(session)
 
         return jsonify(success=True, message="Logged successfully")
-    
-    
-    return jsonify(success=False, message="Bad Request")    
+
+    return jsonify(success=False, message="Bad Request")
 
 
-@app.route("/register", methods=["POST"])
-def register():
+@app.route("/sensor-register", methods=["POST"])
+def sensor_register():
 
     if request.method == "POST":
-        
+
+        req = request.get_json()
+
+        mac_dir = req.get("mac_dir")
+
+        allowed = Allowed(
+            mac_dir=mac_dir
+        ).save()
+
+        return jsonify(success=True, message="Sensor has been registered successfully")
+
+    return jsonify(success=False, message="Bad Request")
+
+
+@app.route("/user-register", methods=["POST"])
+def user_register():
+
+    if request.method == "POST":
+
         req = request.get_json()
 
         username = req.get("username")
         password = req.get("password")
 
         user = User(
-            username = username,
-            password = bcrypt.generate_password_hash(password), 
-            weather_data = [],
+            username=username,
+            password=bcrypt.generate_password_hash(password)
         ).save()
 
-        return jsonify(success=True, message="Register successfully")
-    
-    
-    return jsonify(success=False, message="Bad Request")    
+        return jsonify(success=True, message="User has been registered successfully")
+
+    return jsonify(success=False, message="Bad Request")
