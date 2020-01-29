@@ -4,7 +4,8 @@ class DashBoard extends Component {
   constructor() {
     super();
     this.state = {
-      points: []
+      points: [],
+      message: ""
     };
     this.handlePoints = this.handlePoints.bind(this);
   }
@@ -20,6 +21,8 @@ class DashBoard extends Component {
       .then(data => {
         if (data.success) {
           this.setState({ points: data.result });
+        } else {
+          this.setState({ message: data.message });
         }
       })
       .catch(error => {
@@ -39,6 +42,7 @@ class DashBoard extends Component {
         <button type="submit" onClick={this.handlePoints}>
           Find
         </button>
+        {this.state.message}
         {text}
       </div>
     );

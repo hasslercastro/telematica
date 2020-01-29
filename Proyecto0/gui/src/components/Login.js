@@ -7,7 +7,8 @@ class Login extends Component {
     super();
     this.state = {
       username: "",
-      password: ""
+      password: "",
+      message: ""
     };
 
     this.handleChange = this.handleChange.bind(this);
@@ -43,6 +44,8 @@ class Login extends Component {
         console.log(data);
         if (data.success) {
           this.props.history.push("/dashboard");
+        } else {
+          this.setState({ message: data.message });
         }
       })
       .catch(error => {
@@ -75,6 +78,7 @@ class Login extends Component {
 
           <button type="submit">Login</button>
         </form>
+        {this.state.message}
       </div>
     );
   }

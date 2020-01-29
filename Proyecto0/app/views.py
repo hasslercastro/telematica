@@ -52,7 +52,7 @@ def get_weather_info():
 
     if request.method == "GET":
 
-        username = session["USERNAME"]
+        username = session.get("USERNAME")
 
         if username == None:
             return jsonify(succes=False, message="log in first")
