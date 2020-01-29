@@ -14,7 +14,13 @@ connect("proyecto0")
 
 @app.route('/push-weather', methods=["POST"])
 def push_weather_info():
+    """
+    Push weather info to the database if the sensor has been registered
 
+    Inside the request post:
+
+        mac_dir -> sensor mac
+    """
     if request.method == "POST":
 
         req = request.get_json()
@@ -37,24 +43,14 @@ def push_weather_info():
 
 
 # get view
-@app.route('/get-weather', methods=["POST", "GET"])
+@app.route('/get-weather', methods=["GET"])
 @cross_origin(supports_credentials=True)
 def get_weather_info():
+    """
+    Returns recorded data, if the user is logged.
+    """
 
-    if request.method == "POST":
-
-        req = request.get_json()
-
-        username = req.get("username")
-
-        try:
-            user = User.objects(username=username).get()
-        except DoesNotExist:
-            return jsonify(success=False, message="User doesn't exist")
-
-        return jsonify(success=True, result=user.weather_data)
-
-    else:
+    if request.method == "GET":
 
         username = session["USERNAME"]
 
@@ -73,6 +69,10 @@ def get_weather_info():
 @app.route("/sign-in", methods=["GET", "POST"])
 @cross_origin(supports_credentials=True)
 def sign_in():
+    """
+    Log-In if the user has been added trought user-register endpoint
+
+    """
 
     if request.method == "POST":
 
@@ -99,6 +99,9 @@ def sign_in():
 
 @app.route("/sensor-register", methods=["POST"])
 def sensor_register():
+    """
+    Adds a new sensor to the allowed sensors collection
+    """
 
     if request.method == "POST":
 
@@ -117,6 +120,9 @@ def sensor_register():
 
 @app.route("/user-register", methods=["POST"])
 def user_register():
+    """
+    Adds a new user
+    """
 
     if request.method == "POST":
 
